@@ -12,7 +12,7 @@
 #import <objc/message.h>
 
 // ===== Version =====
-#define SBP_VERSION @"1.0.5"
+#define SBP_VERSION @"1.0.6"
 
 // ===== Preferences =====
 #define PREFS_PATH @"/var/mobile/Library/Preferences/com.mosheng.sileobrowserpicker.plist"
@@ -46,6 +46,7 @@
 static NSURL   *s_pendingURL    = nil;
 static NSString *s_pendingScheme = nil;
 static void (^s_pendingHandler)(NSURL *, NSError *) = nil;
+static ASWebAuthenticationSession *s_pendingSession = nil;
 static BOOL    s_hasPending     = NO;
 
 // ===== Auto-cancel observer =====
@@ -85,6 +86,7 @@ static void cleanupPending(void) {
     s_pendingURL    = nil;
     s_pendingScheme = nil;
     s_pendingHandler = nil;
+    s_pendingSession = nil;
     s_hasPending    = NO;
     s_externalFlow  = NO;
     if (s_activeObserver) {
@@ -202,20 +204,34 @@ static void showBrowserPicker(NSURL *authURL) {
             openInBrowser(authURL, SBP_QUARK);
         }]];
 
+        [alert addAction:[UIAlertAction actionWithTitle:@"Safari (默认)"
+                                                   style:UIAlertActionStyleDefault
+                                                 handler:^(UIAlertAction *a) {
+            // Reuse Sileo's ORIGINAL session object — it already has its
+            // presentationContextProvider configured by Sileo, so starting it
+            // natively gives the normal shared-cookie Safari login (same as
+            // stock Sileo). A freshly allocated session would lack the provider
+            // and throw WebAuthenticationSession error 2.
+            if (s_hasPending && s_pendingSession && s_pendingHandler) {
+                s_bypassHook = YES;
+                s_pendingSession.prefersEphemeralWebBrowserSession = NO;
+                [s_pendingSession start];
+                s_bypassHook = NO;
+                cleanupPending();
+            }
+        }]];
+
         [alert addAction:[UIAlertAction actionWithTitle:@"Safari (独立会话)"
                                                    style:UIAlertActionStyleDefault
                                                  handler:^(UIAlertAction *a) {
-            // Re-create session with ephemeral flag and start natively
-            if (s_hasPending && s_pendingURL && s_pendingHandler) {
+            // Same as above but with an ephemeral (cookie-isolated) session.
+            // Reusing the original session avoids the presentationContextInvalid
+            // error 2 that a brand-new session would hit.
+            if (s_hasPending && s_pendingSession && s_pendingHandler) {
                 s_bypassHook = YES;
-                ASWebAuthenticationSession *newSession =
-                    [[ASWebAuthenticationSession alloc] initWithURL:s_pendingURL
-                                               callbackURLScheme:s_pendingScheme
-                                              completionHandler:s_pendingHandler];
-                newSession.prefersEphemeralWebBrowserSession = YES;
-                [newSession start];
+                s_pendingSession.prefersEphemeralWebBrowserSession = YES;
+                [s_pendingSession start];
                 s_bypassHook = NO;
-                // Clear our pending state — the native session handles the callback
                 cleanupPending();
             }
         }]];
@@ -296,6 +312,7 @@ static BOOL swizzled_openURL_impl(id self, SEL _cmd,
         s_pendingURL     = [url copy];
         s_pendingScheme  = [scheme copy];
         s_pendingHandler = [handler copy];
+        s_pendingSession = ret;
         s_hasPending     = YES;
     }
 

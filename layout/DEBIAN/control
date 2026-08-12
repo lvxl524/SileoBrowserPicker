@@ -1,6 +1,6 @@
 Package: com.mosheng.sileobrowserpicker
 Name: Sileo 浏览器选择
-Version: 1.0.5
+Version: 1.0.6
 Architecture: iphoneos-arm64
 Description: Choose which browser opens for Sileo payment provider login.
 Maintainer: mosheng

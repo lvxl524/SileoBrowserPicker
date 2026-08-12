@@ -8,6 +8,7 @@ SileoPickerPrefs_FILES = SileoBrowserPickerRootListController.m
 SileoPickerPrefs_INSTALL_PATH = /Library/PreferenceBundles
 SileoPickerPrefs_FRAMEWORKS = UIKit
 SileoPickerPrefs_CFLAGS = -fobjc-arc -Wno-error -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations -I..
-SileoPickerPrefs_LDFLAGS = -Wl,-U,_OBJC_CLASS_$_PSListController -Wl,-U,_OBJC_METACLASS_$_PSListController
+# $$ -> literal $ so the linker sees _OBJC_CLASS_$_PSListController (weak/undefined allowed)
+SileoPickerPrefs_LDFLAGS = -Wl,-U,_OBJC_CLASS_$$_PSListController -Wl,-U,_OBJC_METACLASS_$$_PSListController
 
 include $(THEOS_MAKE_PATH)/bundle.mk

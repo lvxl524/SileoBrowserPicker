@@ -8,7 +8,10 @@ SileoPickerPrefs_FILES = SileoBrowserPickerRootListController.m
 SileoPickerPrefs_INSTALL_PATH = /Library/PreferenceBundles
 SileoPickerPrefs_FRAMEWORKS = UIKit
 SileoPickerPrefs_CFLAGS = -fobjc-arc -Wno-error -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations -I..
-# $$ -> literal $ so the linker sees _OBJC_CLASS_$_PSListController (weak/undefined allowed)
-SileoPickerPrefs_LDFLAGS = -Wl,-U,_OBJC_CLASS_$$_PSListController -Wl,-U,_OBJC_METACLASS_$$_PSListController
+# PSListController is provided at runtime by Preferences.app. Allow all undefined
+# symbols to be resolved dynamically at load time. This avoids the fragile
+# -Wl,-U,_OBJC_CLASS_$_PSListController escaping dance (the literal $ in the
+# symbol name gets eaten by make/shell expansion).
+SileoPickerPrefs_LDFLAGS = -Wl,-undefined,dynamic_lookup
 
 include $(THEOS_MAKE_PATH)/bundle.mk

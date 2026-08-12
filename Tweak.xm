@@ -12,7 +12,7 @@
 #import <objc/message.h>
 
 // ===== Version =====
-#define SBP_VERSION @"1.0.0"
+#define SBP_VERSION @"1.0.1"
 
 // ===== Preferences =====
 #define PREFS_PATH @"/var/mobile/Library/Preferences/com.mosheng.sileobrowserpicker.plist"

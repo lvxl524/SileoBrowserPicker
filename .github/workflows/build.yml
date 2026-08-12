@@ -79,7 +79,7 @@ jobs:
           cat > layout/DEBIAN/control << CTRLFILE
           Package: com.mosheng.sileobrowserpicker
           Name: Sileo 浏览器选择
-          Depends: mobilesubstrate, preferenceloader, firmware (>= 15.0)
+          Depends: org.coolstar.ellekit, preferenceloader, firmware (>= 15.0)
           Version: ${CONTROL_VERSION}
           Architecture: iphoneos-arm64
           Description: Choose which browser opens for Sileo payment provider login.
@@ -90,6 +90,22 @@ jobs:
           echo "--- control after rewrite ---"
           cat layout/DEBIAN/control
           make package FINALPACKAGE=1
+
+      - name: Repack with gzip (Sileo cannot extract lzma)
+        run: |
+          set -e
+          DEB=$(ls packages/*.deb | head -n1)
+          echo "Repacking $DEB with gzip compression"
+          rm -rf /tmp/sbp_repack
+          mkdir -p /tmp/sbp_repack
+          dpkg-deb -x "$DEB" /tmp/sbp_repack/
+          dpkg-deb -e "$DEB" /tmp/sbp_repack/DEBIAN
+          rm -f packages/*.deb
+          mkdir -p packages
+          dpkg-deb -Zgzip -b /tmp/sbp_repack "packages/$(basename "$DEB")"
+          echo "=== repacked ==="
+          ls -la packages/
+          dpkg-deb -I packages/*.deb | grep -E '^( Package:| Version:| Architecture:| Depends:)'
 
       - name: Verify built deb
         run: |

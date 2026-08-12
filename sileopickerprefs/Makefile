@@ -5,7 +5,7 @@ include $(THEOS)/makefiles/common.mk
 
 BUNDLE_NAME = SileoPickerPrefs
 SileoPickerPrefs_FILES = SileoBrowserPickerRootListController.m
-SileoPickerPrefs_INSTALL_PATH = /Library/PreferenceBundles
+SileoPickerPrefs_INSTALL_PATH = /Library/PreferenceLoader/Preferences
 SileoPickerPrefs_FRAMEWORKS = UIKit
 SileoPickerPrefs_CFLAGS = -fobjc-arc -Wno-error -Wno-unused-variable -Wno-unused-function -Wno-deprecated-declarations -I..
 # PSListController is provided at runtime by Preferences.app. Allow all undefined

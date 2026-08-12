@@ -1,7 +1,6 @@
 Package: com.mosheng.sileobrowserpicker
 Name: Sileo 浏览器选择
-Depends: org.coolstar.ellekit, firmware (>= 15.0)
-Version: 1.0.2
+Version: 1.0.3
 Architecture: iphoneos-arm64
 Description: Choose which browser opens for Sileo payment provider login.
 Maintainer: mosheng

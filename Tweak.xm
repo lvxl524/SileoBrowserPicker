@@ -12,7 +12,7 @@
 #import <objc/message.h>
 
 // ===== Version =====
-#define SBP_VERSION @"1.0.4"
+#define SBP_VERSION @"1.0.5"
 
 // ===== Preferences =====
 #define PREFS_PATH @"/var/mobile/Library/Preferences/com.mosheng.sileobrowserpicker.plist"
@@ -58,6 +58,15 @@ static IMP  s_orig_openURL     = NULL;
 // ===== Bypass flag (for creating new session internally) =====
 static BOOL s_bypassHook = NO;
 
+// ===== External browser flow flag =====
+// YES when we redirected to an external browser or showed the picker.
+// In that case the ASWebAuthenticationSession itself is NOT active, so the
+// AppDelegate swizzle must manually deliver the sileo:// callback to the
+// stored completion handler. For native Safari modes we call %orig and the
+// session handles the callback itself; our swizzle must NOT call the handler
+// again, or the session throws WebAuthenticationSession error 2.
+static BOOL s_externalFlow = NO;
+
 // ===== Helpers =====
 
 static BOOL sbpEnabled(void) {
@@ -77,6 +86,7 @@ static void cleanupPending(void) {
     s_pendingScheme = nil;
     s_pendingHandler = nil;
     s_hasPending    = NO;
+    s_externalFlow  = NO;
     if (s_activeObserver) {
         [[NSNotificationCenter defaultCenter] removeObserver:s_activeObserver];
         s_activeObserver = nil;
@@ -244,7 +254,11 @@ static BOOL swizzled_openURL_impl(id self, SEL _cmd,
                                   UIApplication *application,
                                   NSURL *url,
                                   NSDictionary *options) {
-    if (s_hasPending && [url.scheme isEqualToString:@"sileo"]) {
+    // Only manually deliver the callback when we redirected to an external
+    // browser or showed the picker. Native Safari/ASWebAuthenticationSession
+    // modes handle the callback internally; calling the handler again would
+    // produce WebAuthenticationSession error 2.
+    if (s_hasPending && s_externalFlow && [url.scheme isEqualToString:@"sileo"]) {
         NSString *host = url.host;
         if ([host isEqualToString:@"authentication_success"] ||
             [host isEqualToString:@"payment_completed"]) {
@@ -304,29 +318,36 @@ static BOOL swizzled_openURL_impl(id self, SEL _cmd,
     switch (mode) {
         case SBP_DISABLED:
         case SBP_SAFARI_DEFAULT:
-            // Native behavior
+            // Native behavior — the ASWebAuthenticationSession itself will
+            // deliver the callback to the completion handler.
+            s_externalFlow = NO;
             return %orig;
 
         case SBP_SAFARI_EPHEMERAL:
             // Set ephemeral flag then start natively
+            s_externalFlow = NO;
             self.prefersEphemeralWebBrowserSession = YES;
             return %orig;
 
         case SBP_ALOOK:
         case SBP_CHROME:
         case SBP_QUARK:
-            // Redirect to external browser
+            // Redirect to external browser — we must deliver callback ourselves
+            s_externalFlow = YES;
             openInBrowser(s_pendingURL, mode);
             setupAutoCancel();
             return YES;  // Pretend session started
 
         case SBP_ASK:
-            // Show picker
+            // Show picker — callback will be delivered either by us (external
+            // browser chosen) or by a new native session (Safari ephemeral).
+            s_externalFlow = YES;
             showBrowserPicker(s_pendingURL);
             setupAutoCancel();
             return YES;
 
         default:
+            s_externalFlow = NO;
             return %orig;
     }
 }

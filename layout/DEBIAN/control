@@ -1,0 +1,9 @@
+Package: com.mosheng.sileobrowserpicker
+Name: Sileo 浏览器选择
+Depends: mobilesubstrate, preferenceloader, firmware (>= 15.0)
+Version: 1.0.0
+Architecture: iphoneos-arm64
+Description: Choose which browser opens for Sileo payment provider login.
+Maintainer: mosheng
+Author: mosheng
+Section: Tweaks

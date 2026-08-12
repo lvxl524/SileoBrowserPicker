@@ -68,11 +68,27 @@ Safari(独立会话) = 隔离 Cookie，不影响 Safari 登录状态
 		</dict>
 		<dict>
 			<key>cell</key>
+			<string>PSSwitchCell</string>
+			<key>default</key>
+			<false/>
+			<key>defaults</key>
+			<string>com.mosheng.sileobrowserpicker</string>
+			<key>key</key>
+			<string>scopeToPayment</string>
+			<key>label</key>
+			<string>仅拦截付款/仓库登录</string>
+			<key>footerText</key>
+			<string>开启后只拦截真正的付款/仓库服务商登录（/authenticate），不碰 Sileo 其它流程，更安全。默认关闭=与旧版一致。</string>
+			<key>PostNotification</key>
+			<string>com.mosheng.sileobrowserpicker.prefschanged</string>
+		</dict>
+		<dict>
+			<key>cell</key>
 			<string>PSGroupCell</string>
 			<key>label</key>
 			<string>关于</string>
 	<key>footerText</key>
-	<string>SileoBrowserPicker v1.0.7
+	<string>SileoBrowserPicker v1.0.8
 拦截 Sileo 付款服务的 ASWebAuthenticationSession，可选择不同浏览器打开登录页面。
 
 支持: Alook / Chrome / 夸克 / Safari / Safari(独立会话)

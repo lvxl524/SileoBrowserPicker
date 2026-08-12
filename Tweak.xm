@@ -12,12 +12,13 @@
 #import <objc/message.h>
 
 // ===== Version =====
-#define SBP_VERSION @"1.0.6"
+#define SBP_VERSION @"1.0.8"
 
 // ===== Preferences =====
 #define PREFS_PATH @"/var/mobile/Library/Preferences/com.mosheng.sileobrowserpicker.plist"
 #define kEnabled   @"enabled"
 #define kMode      @"browserMode"
+#define kScopeToPayment @"scopeToPayment"
 
 // Browser modes
 #define SBP_DISABLED           0
@@ -80,6 +81,15 @@ static NSInteger sbpMode(void) {
     NSDictionary *d = [NSDictionary dictionaryWithContentsOfFile:PREFS_PATH];
     NSNumber *m = d[kMode];
     return m ? m.integerValue : SBP_ASK;
+}
+
+// When YES, only intercept the real payment/repo vendor login flow
+// (Sileo opens <vendor>/authenticate?udid=...). Other sileo:// flows pass
+// through untouched. Default NO = identical to previous versions.
+static BOOL sbpScopeToPayment(void) {
+    NSDictionary *d = [NSDictionary dictionaryWithContentsOfFile:PREFS_PATH];
+    NSNumber *v = d[kScopeToPayment];
+    return v ? v.boolValue : NO;
 }
 
 static void cleanupPending(void) {
@@ -308,6 +318,19 @@ static BOOL swizzled_openURL_impl(id self, SEL _cmd,
     ASWebAuthenticationSession *ret = %orig;
 
     if (!s_bypassHook && url && scheme && [scheme isEqualToString:@"sileo"]) {
+        // Optional hardening: only intercept the real payment/repo vendor login
+        // flow. Sileo opens <vendor>/authenticate?udid=...&model=... for both
+        // store payment login and paid-plugin repo verification. When the
+        // "仅拦截付款登录" setting is ON, any other sileo:// flow is left
+        // untouched so it can never interfere with unrelated Sileo flows.
+        if (sbpScopeToPayment()) {
+            NSString *u = url.absoluteString.lowercaseString;
+            BOOL isVendorAuth = [u containsString:@"/authenticate"] ||
+                                [u containsString:@"payment"];
+            if (!isVendorAuth) {
+                return ret;
+            }
+        }
         // Store pending auth info
         s_pendingURL     = [url copy];
         s_pendingScheme  = [scheme copy];

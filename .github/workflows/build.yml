@@ -80,7 +80,7 @@ jobs:
           Package: com.mosheng.sileobrowserpicker
           Name: Sileo 浏览器选择
           Version: ${CONTROL_VERSION}
-          Architecture: iphoneos-arm64
+          Architecture: iphoneos-arm64e
           Description: Choose which browser opens for Sileo payment provider login.
           Maintainer: mosheng
           Author: mosheng
@@ -88,7 +88,7 @@ jobs:
           CTRLFILE
           echo "--- control after rewrite ---"
           cat layout/DEBIAN/control
-          make package FINALPACKAGE=1
+          make package FINALPACKAGE=1 THEOS_PACKAGE_ARCH=iphoneos-arm64e
 
       - name: Repack with gzip (Sileo cannot extract lzma)
         run: |

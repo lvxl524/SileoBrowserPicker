@@ -72,7 +72,7 @@ Safari(独立会话) = 隔离 Cookie，不影响 Safari 登录状态
 			<key>label</key>
 			<string>关于</string>
 	<key>footerText</key>
-	<string>SileoBrowserPicker v1.0.6
+	<string>SileoBrowserPicker v1.0.7
 拦截 Sileo 付款服务的 ASWebAuthenticationSession，可选择不同浏览器打开登录页面。
 
 支持: Alook / Chrome / 夸克 / Safari / Safari(独立会话)
